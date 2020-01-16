@@ -1,14 +1,6 @@
 /**
-  "Object Placement" Puzzle
-
-  This puzzle requires the player to place one or more items in the
-  correct location, at which point an RFID tag embedded in the object
-  is detected by a sensor.
-  When all sensors read the tag of the correct object, the puzzle is solved.
-
-  Demonstrates:
-  - SPI interface shared between several devices
-  - RFID library
+  "Potion Placement" Puzzle
+  This sketch is setup as an event handler to read specific tags and output different results based on tag read. 
 */
 
 // DEFINES
@@ -16,9 +8,7 @@
 #define DEBUG
 
 // LIBRARIES
-// Standard SPI library comes bundled with the Arduino IDE
 #include <SPI.h>
-// Download and install from https://github.com/miguelbalboa/rfid
 #include <MFRC522.h>
 
 // CONSTANTS
@@ -26,15 +16,15 @@
 const byte numReaders = 1;
 // Each reader has a unique Slave Select pin
 const byte ssPins = 10;
-// They'll share the same reset pin
+// Reset pin
 const byte resetPin = 9;
-// This pin will be driven LOW to release a lock when puzzle is solved
-//const byte lockPin = 4;
-// The sequence of NFC tag IDs required to solve the puzzle
+// Tag info read to trigger output
+// ID strings are written to tags using MFRC522 library 
 const String green = "1111111111111111";
 const String red = "2222222222222222" ;
 const String blue = "3333333333333333";
 
+//outputs
 int green_trigger = 2;
 int red_trigger = 3;
 int blue_trigger = 4;
@@ -47,6 +37,7 @@ int magLock = 7;
 MFRC522 mfrc522;
 // The tag IDs currently detected by each reader
 String currentIDs;
+// specific block to be read from
 byte blockAddr      = 4;
 byte buffer[18]     ;
 byte size          = sizeof(buffer);
@@ -70,20 +61,15 @@ void setup() {
   Serial.println(F("Serial communication started"));
 #endif
 
-  //digitalWrite(lockPin, LOW);
-
+  
   // Initialise the SPI bus
   SPI.begin();
 
-
-
   // Initialise the reader
-  // Note that SPI pins on the reader must always be connected to certain
-  // Arduino pins (on an Uno, MOSI=> pin11, MISO=> pin12, SCK=>pin13)
-  // The Slave Select (SS) pin and reset pin can be assigned to any pin
+  // Documentation for pin setup can be found at https://github.com/miguelbalboa/rfid
   mfrc522.PCD_Init(ssPins, resetPin);
 
-  // Set the gain to max - not sure this makes any difference...
+  // Set the gain to max 
   //mfrc522.PCD_SetAntennaGain(MFRC522::PCD_RxGain::RxGain_max);
 
 #ifdef DEBUG
@@ -119,7 +105,7 @@ void loop() {
   // Assume that the tags have not changed since last reading
   boolean changedValue = false;
 
-  // String to hold the ID detected by each sensor
+  // String to hold the ID detected by sensor
   String readRFID;
 
   // Initialise the sensor
@@ -131,7 +117,6 @@ void loop() {
     if (status == MFRC522::STATUS_OK) {
       status = mfrc522.MIFARE_Read(blockAddr, buffer, &size);
       if (status == MFRC522::STATUS_OK) {
-        //Serial.println(F("Current data in sector:"));
         readRFID = dump_byte_array(buffer, 16);
         Serial.println(readRFID);
       }
